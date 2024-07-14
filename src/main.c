@@ -7,6 +7,6 @@ void main(){
     __putc('\n');
     while(1){
         char c= __getc();
-        __putc(c+1);
+        __putc(c+2);
     }
 }
