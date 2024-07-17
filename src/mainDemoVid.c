@@ -1,6 +1,6 @@
 #include "../lib/console.h"
 
-void main(){
+void mainDemo(){
     __putc('O');
     __putc('S');
     __putc('1');
