@@ -11,4 +11,10 @@ extern void printString(char const *string);
 
 extern void printInteger(uint64 integer);
 
+/**
+ * Prints the address in hexadecimal format
+ * @param address void*
+ */
+extern void printAddress(void* address);
+
 #endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_PRINT_HPP

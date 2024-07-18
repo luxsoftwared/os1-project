@@ -45,9 +45,12 @@ public:
     MemoryAllocator(MemoryAllocator &) = delete;
     void operator=(const MemoryAllocator &) = delete;
     //MemoryAllocator( MemoryAllocator const&)= delete;
-
     //static MemoryAllocator *getInstance();
 
+    /**
+     * Initializes the free memory block that spans from HEAP_START_ADDR to HEAP_END_ADDR\n
+     * This function should and must be called only once, before any memory allocation
+     */
     static void initFreeMem(){
         free_head = (MemElem*)HEAP_START_ADDR;
         free_head->next = nullptr;
@@ -56,14 +59,15 @@ public:
     }
 
     /**
+     *  Allocates a memory block of (sizeInBlocks + sizeOfHeaderInBlocks) MemBlocks, instantiates a MemElem header at the beginning of the block\n
      *
-     * @param sizeInBlocks in blocks
-     * @return void* to the address of the newly allocated space, or nullptr in case of failure
+     * @param sizeInBlocks in MemBlocks
+     * @return void* to the address of the newly allocated space, address RIGHT AFTER MemElem header, or nullptr in case of failure
      */
     static void* mem_alloc(size_t sizeInBlocks);
 
     /**
-     * Frees up the memory block that starts at addr (allocated with mem_alloc)\n
+     * Frees up the memory block that starts at addr (allocated with mem_alloc - addr is address after MemElem header of that block)\n
      * If addr doesnt point to memory block allocated using mem_alloc, error code -1
      * @param addr
      * @return 0 for success; negative in case of an error

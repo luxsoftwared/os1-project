@@ -48,3 +48,24 @@ void printInteger(uint64 integer)
     while (--i >= 0) { __putc(buf[i]); }
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
 }
+
+void printAddress(void* address){
+    uint64 sstatus = Riscv::r_sstatus();
+    Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
+
+    uint64 addr = (uint64)address;
+    static char digits[] = "0123456789ABCDEF";
+    char buf[24];
+    int i;
+
+    i = 0;
+    do
+    {
+        buf[i++] = digits[addr % 16];
+    } while ((addr /= 16) != 0);
+    buf[i++] = 'x';
+    buf[i++] = '0';
+
+    while (--i >= 0) { __putc(buf[i]); }
+    Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
+}

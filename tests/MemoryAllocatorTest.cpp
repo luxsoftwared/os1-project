@@ -3,10 +3,38 @@
 
 #include "../h/MemoryAllocator.hpp"
 #include "../h/print.hpp"
-
+#ifndef DEBUG_LVL
+#define DEBUG_LVL 0
+#endif
 class MemoryAllocatorTest {
 public:
     static const size_t numOfBlocksForMemElem = (sizeof(MemoryAllocator::MemElem) + MEM_BLOCK_SIZE - 1) / MEM_BLOCK_SIZE;
+
+
+    static void printMemoryLists(){
+        int i=0;
+        printString("------------MemoryLists------------\n");
+        printString("FreeMem:\nAddress\t\t\tSize\n");
+        for(MemoryAllocator::MemElem* iter = MemoryAllocator::free_head; iter; iter=iter->next){
+            printInteger(i++);printString(":");
+            printAddress((void*)iter);
+            printString("\t");
+            printInteger((uint64)(iter->size));
+            printString("\n");
+        }
+        printString("\n");
+        i=0;
+        printString("FullMem:\nAddress\t\t\tSize\n");
+        for(MemoryAllocator::MemElem* iter = MemoryAllocator::full_head;iter;iter=iter->next){
+            printInteger(i++);printString(":");
+            printAddress((void*)iter);
+            printString("\t");
+            printInteger((uint64)(iter->size));
+            printString("\n");
+        }
+        printString("------------------------------------\n");
+    }
+
 
     static void allocateAndFreeMemory() {
         void* block1 = MemoryAllocator::mem_alloc(10);
@@ -40,41 +68,21 @@ public:
         printString("freeNullPointer: Passed\n");
     }
 
-    static void printMemoryLists(){
-        printString("FreeMem:\n");
-        for(MemoryAllocator::MemElem* iter = MemoryAllocator::free_head;iter;iter=iter->next){
-            printInteger((uint64)(iter));
-            printString(" ");
-            printInteger((uint64)(iter->size));
-            printString("\n");
-        }
-        printString("FUllMem:\n");
-        for(MemoryAllocator::MemElem* iter = MemoryAllocator::full_head;iter;iter=iter->next){
-            printInteger((uint64)(iter));
-            printString(" ");
-            printInteger((uint64)(iter->size));
-            printString("\n");
-        }
-    }
+
 
     static void allocateExactSizeBlock() {
         //MemoryAllocator* allocator = MemoryAllocator::getInstance();
         size_t size = MemoryAllocator::free_head->size / MEM_BLOCK_SIZE - numOfBlocksForMemElem;
         void* targetFreeSegment = MemoryAllocator::free_head+1; // !!! test failed bcs free_head points to header, and mem_alloc returns adress after header
-        printMemoryLists();
+
         void* block = MemoryAllocator::mem_alloc(size);
-        printMemoryLists();
+
         if (block == nullptr) {
             printString("allocateExactSizeBlock: Allocation failed\n");
             return;
         }
         if(targetFreeSegment != block){
-            printString("free:");
-            printInteger((uint64)(targetFreeSegment));
-            printString("block:");
-            printInteger((uint64)(block));
             printString("allocateExactSizeBlock: Block not allocated with intended free segment of the same size\n");
-
             return;
         }
         if (MemoryAllocator::mem_free(block) != 0) {
@@ -142,13 +150,28 @@ public:
     static void runAll() {
 
         allocateAndFreeMemory();
+        if(DEBUG_LVL)   printMemoryLists();
+
         allocateTooLargeBlock();
+        if(DEBUG_LVL) printMemoryLists();
+
         freeNullPointer();
+        if(DEBUG_LVL) printMemoryLists();
+
         allocateExactSizeBlock();
+        if(DEBUG_LVL) printMemoryLists();
+
         allocateAndFreeMultipleBlocks();
+        if(DEBUG_LVL) printMemoryLists();
+
         coalesceFreeBlocks();
+        if(DEBUG_LVL) printMemoryLists();
+
         allocateZeroSize();
+        if(DEBUG_LVL) printMemoryLists();
+
         allocateNegativeSize();
+        if(DEBUG_LVL) printMemoryLists();
     }
 };
 #endif //PROJECT_BASE_V1_1_MEMORYALLOCATORTEST_CPP

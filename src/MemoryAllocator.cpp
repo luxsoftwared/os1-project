@@ -1,28 +1,15 @@
 
 #include "../h/MemoryAllocator.hpp"
 
-
-
 // [MemElem][actual data][potential padding]
 // MemElem->size refers to total size of the block, including the MemElem header and the padding
-//TODO change to something that doesnt lose this much mem to fragmentation, bcs currently i add at least one whole block for header which can be a lot smaller(header is max 3x64 but block can be 1024)
 
-
+//TODO change to something that doesnt lose this much mem to fragmentation,
+// bcs currently i add at least one whole block for header which can be a lot smaller(header is max 24B but block can be 1024)
+// TODOalso small fragents can be left hanging(when there isnt enough space for a new free MemElem header)
 
 MemoryAllocator::MemElem* MemoryAllocator::full_head = nullptr;
 MemoryAllocator::MemElem* MemoryAllocator::free_head  = nullptr;
-
-//MemoryAllocator::MemElem* MemoryAllocator::free_head = nullptr;
-/*
-MemoryAllocator::MemElem* MemoryAllocator::full_head = nullptr;
-MemoryAllocator::MemElem* MemoryAllocator::free_head  = (MemElem*)HEAP_START_ADDR;
-
-MemoryAllocator::MemElem* MemoryAllocator::free_head ->next = nullptr;
-MemoryAllocator::MemElem* MemoryAllocator::free_head ->prev = nullptr;
-MemoryAllocator::MemElem* MemoryAllocator::free_head ->size = (char*)HEAP_END_ADDR - (char*)HEAP_START_ADDR;
-*/
-//MemoryAllocator* MemoryAllocator::memoryAllocator = nullptr;
-
 const size_t numOfBlocksForMemElem = (sizeof(MemoryAllocator::MemElem) + MEM_BLOCK_SIZE - 1) / MEM_BLOCK_SIZE;
 /*
 MemoryAllocator* MemoryAllocator::getInstance() {
@@ -68,12 +55,17 @@ void* MemoryAllocator::mem_alloc(size_t sizeInBlocks) {
             newBlock->size = numOfBlocksNeeded * MEM_BLOCK_SIZE;
 
             //searching for the place to insert the new block
-            //  so blocks stay sorted by address
+            //so blocks stay sorted by address
             iter = full_head;
-            if(iter==nullptr){
+            if(full_head==nullptr){
                 full_head = newBlock;
                 newBlock->next = nullptr;
                 newBlock->prev = nullptr;
+            }else if(full_head > newBlock) {
+                newBlock->next = full_head;
+                newBlock->prev = nullptr;
+                full_head->prev = newBlock;
+                full_head = newBlock;
             }else{
                 for(;iter->next && iter->next < newBlock; iter=iter->next);
                 newBlock->next = iter->next;
@@ -81,11 +73,6 @@ void* MemoryAllocator::mem_alloc(size_t sizeInBlocks) {
                 if(iter->next) iter->next->prev = newBlock;
                 iter->next = newBlock;
             }
-            /* adding segment to beginning of the list - OLD
-            newBlock->next = full_head;
-            newBlock->prev = nullptr;
-            if(full_head) full_head->prev = newBlock;
-            full_head = newBlock;*/
 
             return (void*)( (char*)newBlock + sizeof(MemElem)); //address right after the MemElem header
         }
@@ -104,12 +91,20 @@ int MemoryAllocator::mem_free(void* addr){
 
     //add to free list
     MemElem* iter = free_head;
-    if(iter==nullptr){
+    if(free_head==nullptr){
         free_head = block;
         block->next = nullptr;
         block->prev = nullptr;
         return 0;
+    }else if(free_head > block){
+        block->next = iter;
+        block->prev = nullptr;
+        iter->prev = block;
+        free_head = block;
+        joinBlocks(block,block->next);
+        return 0;
     }
+    //regular searching for a place to insert the block
     for(;iter->next && iter->next < block; iter=iter->next);
     if(iter->next){ //better visibility like this
         block->next = iter->next;
@@ -122,14 +117,8 @@ int MemoryAllocator::mem_free(void* addr){
         iter->next = block;
     }
 
-    //try to join with adjacent blocks
-    /*
-    MemElem* newFreeBlock = joinBlocks(block, block->next);
-    if(newFreeBlock) joinBlocks(newFreeBlock->prev, newFreeBlock);
-    else joinBlocks(block->prev, block);*/
     joinBlocks(block,block->next); //if successful block will still point to correct location
     joinBlocks(block->prev,block);
-
 
     return 0;
 }

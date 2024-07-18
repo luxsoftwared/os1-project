@@ -9,6 +9,9 @@
 
 #include "../tests/MemoryAllocatorTest.cpp"
 
+#ifndef DEBUG_LVL
+#define DEBUG_LVL 0
+#endif
 int mainThreadTest()
 {
     TCB *threads[5];
@@ -48,10 +51,8 @@ int mainThreadTest()
 
 
 int main(){
-    int stakojik= 2;
     MemoryAllocator::initFreeMem();
-    printInteger(stakojik);
     MemoryAllocatorTest::runAll();
-    printString("Sucess?");
     return 0;
 }
+
