@@ -11,6 +11,18 @@ class Riscv
 {
 public:
 
+    // read register a0
+    static uint64 r_a0();
+
+    // write register a0
+    static void w_a0(uint64 a0);
+
+    // read register a1
+    static uint64 r_a1();
+
+    // write register a1
+    static void w_a1(uint64 a1);
+
     // pop sstatus.spp and sstatus.spie bits (has to be a non inline function)
     static void popSppSpie();
 
@@ -85,6 +97,30 @@ private:
     static void handleSupervisorTrap();
 
 };
+
+inline uint64 Riscv::r_a0()
+{
+    uint64 volatile a0;
+    __asm__ volatile ("mv %[a0], a0" : [a0] "=r"(a0));
+    return a0;
+}
+
+inline void Riscv::w_a0(uint64 a0)
+{
+    __asm__ volatile ("mv a0, %[a0]" : : [a0] "r"(a0));
+}
+
+inline uint64 Riscv::r_a1()
+{
+    uint64 volatile a0;
+    __asm__ volatile ("mv %[a0], a0" : [a0] "=r"(a0));
+    return a0;
+}
+
+inline void Riscv::w_a1(uint64 a0)
+{
+    __asm__ volatile ("mv a0, %[a0]" : : [a0] "r"(a0));
+}
 
 inline uint64 Riscv::r_scause()
 {
