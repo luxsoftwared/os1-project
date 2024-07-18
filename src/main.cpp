@@ -7,7 +7,9 @@
 #include "../h/print.hpp"
 #include "../h/riscv.hpp"
 
-int main()
+#include "../tests/MemoryAllocatorTest.cpp"
+
+int mainThreadTest()
 {
     TCB *threads[5];
 
@@ -40,5 +42,16 @@ int main()
     }
     printString("Finished\n");
 
+    return 0;
+}
+
+
+
+int main(){
+    int stakojik= 2;
+    MemoryAllocator::initFreeMem();
+    printInteger(stakojik);
+    MemoryAllocatorTest::runAll();
+    printString("Sucess?");
     return 0;
 }
