@@ -7,6 +7,9 @@
 
 #include "../lib/hw.h"
 
+//extern "C" void supervisorTrap();
+//extern "C" void C_call_handleSupervisorTrap();
+
 class Riscv
 {
 public:
@@ -52,9 +55,9 @@ public:
 
     enum BitMaskSip
     {
-        SIP_SSIP = (1 << 1),
-        SIP_STIP = (1 << 5),
-        SIP_SEIP = (1 << 9),
+        SIP_SSIP = (1 << 1),// supervisor lvl software interrupt
+        SIP_STIP = (1 << 5),// supervisor lvl timer interrupt
+        SIP_SEIP = (1 << 9),// supervisor lvl external interrupt
     };
 
     // mask set register sip
@@ -71,9 +74,9 @@ public:
 
     enum BitMaskSstatus
     {
-        SSTATUS_SIE = (1 << 1),
-        SSTATUS_SPIE = (1 << 5),
-        SSTATUS_SPP = (1 << 8),
+        SSTATUS_SIE = (1 << 1), // supervisor interrupt enable
+        SSTATUS_SPIE = (1 << 5),// previous supervisor interrupt enable
+        SSTATUS_SPP = (1 << 8),// previous privilege mode
     };
 
     // mask set register sstatus
@@ -112,14 +115,14 @@ inline void Riscv::w_a0(uint64 a0)
 
 inline uint64 Riscv::r_a1()
 {
-    uint64 volatile a0;
-    __asm__ volatile ("mv %[a0], a0" : [a0] "=r"(a0));
-    return a0;
+    uint64 volatile a1;
+    __asm__ volatile ("mv %[a1], a1" : [a1] "=r"(a1));
+    return a1;
 }
 
-inline void Riscv::w_a1(uint64 a0)
+inline void Riscv::w_a1(uint64 a1)
 {
-    __asm__ volatile ("mv a0, %[a0]" : : [a0] "r"(a0));
+    __asm__ volatile ("mv a1, %[a1]" : : [a1] "r"(a1));
 }
 
 inline uint64 Riscv::r_scause()

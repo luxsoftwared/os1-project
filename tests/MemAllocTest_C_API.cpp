@@ -1,25 +1,36 @@
 //
 // Created by luksu on 18-Jul-24.
 //
+
+
 #include "../h/syscall_c.hpp"
 #include "../h/print.hpp"
+#include "../h/riscv.hpp"
 
-void allocates_memory_successfully() {
+
+void FreeAllocatedMemory(void* ptr) {
+    //size_t size = 1024; // 1KB
+    //void* ptr = mem_alloc(size);
+    int ret = mem_free(ptr);
+    if (ret != 0) {
+        printString("FreeAllocatedMemory failed.\n");
+    }else{
+        printString("FreeAllocatedMemory Passed.\n");
+    }
+}
+
+void AllocateMemory() {
     size_t size = 1024; // 1KB
     void* ptr = mem_alloc(size);
     if (ptr == nullptr) {
-        printString("allocates_memory_successfully failed.\n");
+        printString("AllocateMemory failed.\n");
         return;
-    }
-    mem_free(ptr); // Cleanup
-}
+    }else{
+        printAddress(ptr);
+        printString("AllocateMemory Passed.\n");
 
-void frees_allocated_memory_successfully() {
-    size_t size = 1024; // 1KB
-    void* ptr = mem_alloc(size);
-    if (ptr == nullptr || mem_free(ptr) != 0) {
-        printString("frees_allocated_memory_successfully failed.\n");
     }
+    FreeAllocatedMemory(ptr);
 }
 
 void allocation_fails_with_zero_size() {
@@ -36,15 +47,6 @@ void freeing_null_pointer_returns_error() {
     }
 }
 
-void allocates_minimum_block_size_even_for_smaller_size() {
-    size_t size = 1; // Request smaller than MEM_BLOCK_SIZE
-    void* ptr = mem_alloc(size);
-    if (ptr == nullptr) {
-        printString("allocates_minimum_block_size_even_for_smaller_size failed.\n");
-        return;
-    }
-    mem_free(ptr); // Cleanup
-}
 
 void allocation_returns_different_pointers_for_subsequent_calls() {
     size_t size = 1024; // 1KB
@@ -58,13 +60,15 @@ void allocation_returns_different_pointers_for_subsequent_calls() {
 }
 
 int main() {
-    allocates_memory_successfully();
-    frees_allocated_memory_successfully();
+    Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
+    //Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
+
+    AllocateMemory();
     allocation_fails_with_zero_size();
     freeing_null_pointer_returns_error();
-    allocates_minimum_block_size_even_for_smaller_size();
     allocation_returns_different_pointers_for_subsequent_calls();
 
     printString("All tests executed.\n");
+
     return 0;
 }

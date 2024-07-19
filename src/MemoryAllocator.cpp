@@ -26,6 +26,8 @@ MemoryAllocator* MemoryAllocator::getInstance() {
 }
 */
 void* MemoryAllocator::mem_alloc(size_t sizeInBlocks) {
+    if(free_head == nullptr && full_head == nullptr) initFreeMem();
+
     if(sizeInBlocks <= 0 || sizeInBlocks >= ( (char*)HEAP_END_ADDR-(char*)HEAP_START_ADDR )/MEM_BLOCK_SIZE) return nullptr;
     size_t numOfBlocksNeeded = sizeInBlocks + numOfBlocksForMemElem;//space needed is at least sizeInBlocks+numOfBlocks(MemElem)
 

@@ -12,7 +12,7 @@ void* mem_alloc (size_t size){
     __asm__ volatile ("li a0, 0x01");
     __asm__ volatile ("ecall");
 
-    void* returnValue;
+    void* volatile returnValue;
     __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
     return returnValue;
 }
@@ -22,7 +22,7 @@ int mem_free (void* addr){
     __asm__ volatile ("li a0, 0x02");
     __asm__ volatile ("ecall");
 
-    int returnValue;
+    int volatile returnValue;
     __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
     return returnValue;
 }

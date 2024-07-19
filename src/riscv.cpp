@@ -6,6 +6,7 @@
 #include "../h/tcb.hpp"
 #include "../lib/console.h"
 #include "../h/MemoryAllocator.hpp"
+#include "../h/print.hpp"
 
 enum ABI_codes{
     MEM_ALLOC = 0x01,
@@ -32,12 +33,21 @@ void Riscv::popSppSpie()
     __asm__ volatile("sret");
 }
 
+//void C_call_handleSupervisorTrap(){Riscv::handleSupervisorTrap();}
+
 void Riscv::handleSupervisorTrap()
 {
     uint64 scause = r_scause();
+    uint64 codeOperation = r_a0();
+    uint64 sepc = r_sepc()+4;
+    uint64 sstatus = r_sstatus();
+
+    //printAddress((void*)scause);
+    //printString("\t");
     if (scause == 0x0000000000000008UL || scause == 0x0000000000000009UL)
     {
         // interrupt: no; cause code: environment call from U-mode(8) or S-mode(9)
+
         /* code for syncr thread inter from V7
         uint64 volatile sepc = r_sepc() + 4;
         uint64 volatile sstatus = r_sstatus();
@@ -46,27 +56,44 @@ void Riscv::handleSupervisorTrap()
         w_sstatus(sstatus);
         w_sepc(sepc);*/
 
-        uint64 volatile sepc = r_sepc() + 4;
-        uint64 volatile sstatus = r_sstatus();
+        /*
+        uint64 sepc = 0;
+        __asm__ volatile ("csrr %[sepc], sepc" : [sepc] "=r"(sepc));
+        sepc = r_sepc();
+        sepc = sepc + 4;
+        uint64 sstatus = 0;
+        __asm__ volatile ("csrr %[sstatus], sstatus" : [sstatus] "=r"(sstatus));
+        sstatus = r_sstatus();
+        Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
+        */
 
-        uint64 codeOperation = r_a0();
+        /*
+        printAddress((void*)sepc);
+        printString("\t");
+        printAddress((void*)sstatus);
+        printString("\t");
+
+        //__asm__ volatile ("mv %[codeOperation], a0" : [codeOperation] "=r"(codeOperation));
+        printInteger(codeOperation);
+        printString("\n");
+         */
         switch (codeOperation) {
             case MEM_ALLOC:{
                 size_t size;
                 size = r_a1();
-                void* returnValue;
-                returnValue = MemoryAllocator::mem_alloc(size);
-                //t0,fp+80??
+                void* returnValue=MemoryAllocator::mem_alloc(size);
                 __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
                 break;
                 }
             case MEM_FREE:{
-                void* addr;
+                void* volatile addr;
                 __asm__ volatile ("mv %0, a1" : "=r" (addr));
                 int returnValue;
                 returnValue = MemoryAllocator::mem_free(addr);
-                //t0,fp+80??
+
                 __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
                 break;
                 }
             case THREAD_CREATE:
@@ -94,6 +121,7 @@ void Riscv::handleSupervisorTrap()
 
                     break;
         }
+        Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
         w_sstatus(sstatus);
         w_sepc(sepc);
 
@@ -101,6 +129,8 @@ void Riscv::handleSupervisorTrap()
     else if (scause == 0x8000000000000001UL)
     {
         // interrupt: yes; cause code: supervisor software interrupt (CLINT; machine timer interrupt)
+        Riscv::mc_sip(Riscv::SIP_SSIP);
+        /*
         mc_sip(SIP_SSIP);
         TCB::timeSliceCounter++;
         if (TCB::timeSliceCounter >= TCB::running->getTimeSlice())
@@ -112,6 +142,7 @@ void Riscv::handleSupervisorTrap()
             w_sstatus(sstatus);
             w_sepc(sepc);
         }
+         */
     }
     else if (scause == 0x8000000000000009UL)
     {
@@ -121,5 +152,8 @@ void Riscv::handleSupervisorTrap()
     else
     {
         // unexpected trap cause
+        printString("ERROR! SCAUSE:");
+        printInteger(scause);
+        printString("\n");
     }
 }

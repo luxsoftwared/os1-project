@@ -12,6 +12,7 @@
 #ifndef DEBUG_LVL
 #define DEBUG_LVL 0
 #endif
+
 int mainThreadTest()
 {
     TCB *threads[5];
@@ -50,9 +51,16 @@ int mainThreadTest()
 
 
 
-int main(){
+int mainAllocationTest(){
     MemoryAllocator::initFreeMem();
     MemoryAllocatorTest::runAll();
+    return 0;
+}
+
+int mainMain(){
+    Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
+    MemoryAllocator::initFreeMem();
+
     return 0;
 }
 
