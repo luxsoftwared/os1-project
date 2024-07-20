@@ -103,12 +103,12 @@ void Riscv::handleSupervisorTrap()
 
                 break;
             case THREAD_DISPATCH:{
-                uint64 volatile sepc = r_sepc() + 4;
-                uint64 volatile sstatus = r_sstatus();
+                //uint64 volatile sepc = r_sepc() + 4;
+                //uint64 volatile sstatus = r_sstatus();
                 TCB::timeSliceCounter = 0;
                 TCB::dispatch();
-                w_sstatus(sstatus);
-                w_sepc(sepc);
+                //w_sstatus(sstatus);
+                //w_sepc(sepc);
                 break;
                 }
             case SEM_OPEN:
@@ -132,7 +132,7 @@ void Riscv::handleSupervisorTrap()
                 printString("\n");
                 break;
 }
-        Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
+        //Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
         w_sstatus(sstatus);
         w_sepc(sepc);
 
@@ -145,8 +145,8 @@ void Riscv::handleSupervisorTrap()
         TCB::timeSliceCounter++;
         if (TCB::timeSliceCounter >= TCB::running->getTimeSlice())
         {
-            uint64 sepc = r_sepc();
-            uint64 sstatus = r_sstatus();
+            //uint64 sepc = r_sepc();
+            //uint64 sstatus = r_sstatus();
             TCB::timeSliceCounter = 0;
             TCB::dispatch();
             w_sstatus(sstatus);
