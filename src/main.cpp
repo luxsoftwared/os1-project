@@ -13,7 +13,7 @@
 #define DEBUG_LVL 0
 #endif
 
-int mainThreadTest()
+int main()
 {
     TCB *threads[5];
 
@@ -60,6 +60,7 @@ int mainAllocationTest(){
 int mainMain(){
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     MemoryAllocator::initFreeMem();
+    //Riscv::mc_sip(Riscv::SIP_SSIP);
 
     return 0;
 }

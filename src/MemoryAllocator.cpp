@@ -8,9 +8,6 @@
 // bcs currently i add at least one whole block for header which can be a lot smaller(header is max 24B but block can be 1024)
 // TODOalso small fragents can be left hanging(when there isnt enough space for a new free MemElem header)
 
-MemoryAllocator::MemElem* MemoryAllocator::full_head = nullptr;
-MemoryAllocator::MemElem* MemoryAllocator::free_head  = nullptr;
-const size_t numOfBlocksForMemElem = (sizeof(MemoryAllocator::MemElem) + MEM_BLOCK_SIZE - 1) / MEM_BLOCK_SIZE;
 /*
 MemoryAllocator* MemoryAllocator::getInstance() {
     if( memoryAllocator==nullptr ) {
@@ -25,6 +22,14 @@ MemoryAllocator* MemoryAllocator::getInstance() {
     return memoryAllocator;
 }
 */
+
+MemoryAllocator::MemElem* MemoryAllocator::full_head = nullptr;
+MemoryAllocator::MemElem* MemoryAllocator::free_head  = nullptr;
+const size_t numOfBlocksForMemElem = (sizeof(MemoryAllocator::MemElem) + MEM_BLOCK_SIZE - 1) / MEM_BLOCK_SIZE;
+
+
+
+
 void* MemoryAllocator::mem_alloc(size_t sizeInBlocks) {
     if(free_head == nullptr && full_head == nullptr) initFreeMem();
 

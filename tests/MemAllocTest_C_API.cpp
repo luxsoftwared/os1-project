@@ -59,7 +59,7 @@ void allocation_returns_different_pointers_for_subsequent_calls() {
     mem_free(ptr2); // Cleanup
 }
 
-int main() {
+int mainT() {
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     //Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
