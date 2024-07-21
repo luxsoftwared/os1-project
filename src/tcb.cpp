@@ -9,10 +9,11 @@ TCB *TCB::running = nullptr;
 
 uint64 TCB::timeSliceCounter = 0;
 
-TCB *TCB::createThread(Body body)
+TCB *TCB::createThread(Body body, void* stack_space, void* arg)
 {
-    return new TCB(body, TIME_SLICE);
+    return new TCB(body, stack_space, arg, TIME_SLICE);
 }
+
 
 void TCB::yield()
 {
@@ -37,7 +38,7 @@ void TCB::threadWrapper()
     // take SPP val and set SPIE  and restore ||||ovo dole
     Riscv::popSppSpie(); //stavlja ra u sepc(jer tren sepc je od stare niti), i sa sret skida spp spie i vraca se ovde
     // no//bcs on start of the execution thread pushes random values on stack during initial contextSwitch(only second half is done)
-    running->body();
+    running->body(running->arg);
     running->setFinished(true);
     TCB::yield();
 }

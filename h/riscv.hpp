@@ -10,6 +10,29 @@
 //extern "C" void supervisorTrap();
 //extern "C" void C_call_handleSupervisorTrap();
 
+
+/*
+Reg     ABIName Description         Saver
+x0      zero    Hard-wired zero     —
+x1      ra      Return address      Caller
+x2      sp      Stack pointer       Callee
+x3      gp      Global pointer      —
+x4      tp      Thread pointer      —
+x5–7    t0–2    Temporaries         Caller
+x8      s0/fp   Saved register/frame pointer    Callee
+x9      s1      Saved register      Callee
+x10–11  a0–1    Function arguments/return values    Caller
+x12–17  a2–7    Function arguments  Caller
+x18–27  s2–11   Saved registers     Callee
+x28–31  t3–6    Temporaries         Caller
+f0–7    ft0–7   FP temporaries      Caller
+f8–9    fs0–1   FP saved registers  Callee
+f10–11  fa0–1   FP arguments/return values  Caller
+f12–17  fa2–7   FP arguments        Caller
+f18–27  fs2–11  FP saved registers  Callee
+f28–31  ft8–11  FP temporaries      Caller
+ */
+
 class Riscv
 {
 public:
@@ -25,6 +48,12 @@ public:
 
     // write register a1
     static void w_a1(uint64 a1);
+
+    static uint64 r_a2();
+
+    static uint64 r_a3();
+
+    static uint64 r_a4();
 
     // pop sstatus.spp and sstatus.spie bits (has to be a non inline function)
     static void popSppSpie();
@@ -123,6 +152,25 @@ inline uint64 Riscv::r_a1()
 inline void Riscv::w_a1(uint64 a1)
 {
     __asm__ volatile ("mv a1, %[a1]" : : [a1] "r"(a1));
+}
+
+inline uint64 Riscv::r_a2()
+{
+    uint64 volatile a2;
+    __asm__ volatile ("mv %[a2], a2" : [a2] "=r"(a2));
+    return a2;
+}
+inline uint64 Riscv::r_a3()
+{
+    uint64 volatile a3;
+    __asm__ volatile ("mv %[a3], a3" : [a3] "=r"(a3));
+    return a3;
+}
+inline uint64 Riscv::r_a4()
+{
+    uint64 volatile a4;
+    __asm__ volatile ("mv %[a4], a4" : [a4] "=r"(a4));
+    return a4;
 }
 
 inline uint64 Riscv::r_scause()

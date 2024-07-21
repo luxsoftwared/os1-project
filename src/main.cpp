@@ -8,13 +8,16 @@
 #include "../h/riscv.hpp"
 
 #include "../tests/MemoryAllocatorTest.cpp"
+#include "../tests/testFunctions.h"
 
 #ifndef DEBUG_LVL
 #define DEBUG_LVL 0
 #endif
 
-int main()
+//TODO fix:not working anymore bcs create thread was changed
+int mainThreadTest()
 {
+    /*
     TCB *threads[5];
 
     threads[0] = TCB::createThread(nullptr);
@@ -45,10 +48,9 @@ int main()
         delete thread;
     }
     printString("Finished\n");
-
+*/
     return 0;
 }
-
 
 
 int mainAllocationTest(){
@@ -57,11 +59,15 @@ int mainAllocationTest(){
     return 0;
 }
 
-int mainMain(){
+int main(){
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     MemoryAllocator::initFreeMem();
     //Riscv::mc_sip(Riscv::SIP_SSIP);
+    return runThreadTest_C_API();
 
-    return 0;
+
 }
+
+
+
 

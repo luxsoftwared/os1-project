@@ -96,12 +96,48 @@ void Riscv::handleSupervisorTrap()
                 __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
                 break;
                 }
-            case THREAD_CREATE:
+            case THREAD_CREATE:{
+                TCB** volatile handle;
+                void* volatile startFunction;
+                void* volatile arg;
+                void* volatile stack;
 
-                break;
-            case THREAD_EXIT:
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
 
+                __asm__ volatile("ld t1, 12*8(fp)"); //getting a2/x12 from stack
+                __asm__ volatile ("mv %[startFunction], t1" : [startFunction] "=r"(startFunction));
+
+                __asm__ volatile("ld t1, 13*8(fp)"); //getting a3/x13 from stack
+                __asm__ volatile ("mv %[arg], t1" : [arg] "=r"(arg));
+
+                __asm__ volatile("ld t1, 14*8(fp)"); //getting a4/x14 from stack
+                __asm__ volatile ("mv %[stack], t1" : [stack] "=r"(stack));
+                int returnValue = -10;
+                if(handle){
+                    *handle = TCB::createThread((TCB::Body)startFunction, stack, arg);
+                    if(*handle == nullptr){
+                        //printString("ERROR! unsuccesfull TCB::createThread call\n");
+                        returnValue = -1;
+                    }else{
+                        returnValue = 0;
+                    }
+                }else{
+                    //printString("ERROR! forwarded handle is nullptr\n");
+                    returnValue = -2;
+                }
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
                 break;
+            }
+            case THREAD_EXIT:{// TODO handle situation when it can return error, neg
+                TCB::running->setFinished(true);
+                TCB::timeSliceCounter = 0;
+                TCB::dispatch();
+                __asm__ volatile ("li t0, 0");
+                __asm__ volatile ("sw t0, 80(x8)");
+            }
             case THREAD_DISPATCH:{
                 //uint64 volatile sepc = r_sepc() + 4;
                 //uint64 volatile sstatus = r_sstatus();
@@ -126,12 +162,14 @@ void Riscv::handleSupervisorTrap()
             case SEM_TIMEDWAIT:
 
                 break;
-            default:
+            default:{
                 printString("ERROR! CODE OPERATION:");
                 printInteger(codeOperation);
                 printString("\n");
                 break;
-}
+            }
+
+        }
         //Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
         w_sstatus(sstatus);
         w_sepc(sepc);

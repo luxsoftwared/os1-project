@@ -3,7 +3,7 @@
 //
 
 
-#include "../h/syscall_c.hpp"
+#include "../h/syscall_c.h"
 #include "../h/print.hpp"
 #include "../h/riscv.hpp"
 
