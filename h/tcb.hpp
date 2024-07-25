@@ -18,6 +18,14 @@ public:
 
     void setFinished(bool value) { finished = value; }
 
+    bool isBlocked() const { return blocked; }
+
+    void setBlocked(bool value) { blocked = value; }
+
+    bool isSemaphoreDeleted() const { return semaphoreDeleted; }
+
+    void setSemaphoreDeleted(bool value) { semaphoreDeleted = value; }
+
     uint64 getTimeSlice() const { return timeSlice; }
 
     using Body = void (*)(void*);
@@ -39,7 +47,8 @@ private:
                      stack != nullptr ? (uint64) &stack[STACK_SIZE] : 0
                     }),
             timeSlice(timeSlice),
-            finished(false)
+            finished(false),
+            blocked(false)
     {
         if (body != nullptr) { Scheduler::put(this); }
     }
@@ -56,8 +65,11 @@ private:
     Context context;
     uint64 timeSlice;
     bool finished;
+    bool blocked;
+    bool semaphoreDeleted = false;
 
     friend class Riscv;
+    friend class Sem;
 
     /**
     * Setting the thread up for initial execution if its body, getting spp and spie

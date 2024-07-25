@@ -4,6 +4,7 @@
 
 #include "../h/tcb.hpp"
 #include "../h/riscv.hpp"
+#include "../h/print.hpp"
 
 TCB *TCB::running = nullptr;
 
@@ -23,8 +24,9 @@ void TCB::yield()
 
 void TCB::dispatch()
 {
+    if(running == nullptr) { printString("There us no running\n");return; }
     TCB *old = running;
-    if (!old->isFinished()) { Scheduler::put(old); }
+    if (!old->isFinished() && !old->isBlocked() ) { Scheduler::put(old); }
     running = Scheduler::get();
 
     TCB::contextSwitch(&old->context, &running->context);
@@ -42,3 +44,6 @@ void TCB::threadWrapper()
     running->setFinished(true);
     TCB::yield();
 }
+
+
+

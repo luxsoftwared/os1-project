@@ -6,5 +6,9 @@
 #define PROJECT_BASE_V1_1_TESTFUNCTIONS_H
 
 int runThreadTest_C_API();
+int mainSemClassTest();
+int mainSemTest_C_API();
+
+
 
 #endif //PROJECT_BASE_V1_1_TESTFUNCTIONS_H

@@ -5,7 +5,9 @@
 #include "../h/syscall_c.h"
 #include "../h/print.hpp"
 
-# define FIBONACCI_ARGUMENT_N 9
+# define FIBONACCI_ARGUMENT_N 32
+
+#define NUM_OF_INNER_LOOPS 1000000 //10^6
 
 void workerBodyA_(void *arg)
 {
@@ -15,14 +17,18 @@ void workerBodyA_(void *arg)
         printString("A: i=");
         printInteger(i);
         printString("\n");
-        __asm__("li t1,10");
-        thread_dispatch();
-        uint64 volatile temp;
-        __asm__("mv %0, t1" : "=r"(temp));
-        if(temp != 10){
-            printString("!!!ERROR!!!ThreadA: temporary register t1 changed value while thread was inactive\nNew t1 value:");
-            printInteger(temp);
-            printString("\n");
+        for(int j=0;j<NUM_OF_INNER_LOOPS;j++) { //10^6
+
+            __asm__("li t1,10");
+            thread_dispatch();
+            uint64 volatile temp;
+            __asm__("mv %0, t1" : "=r"(temp));
+            if (temp != 10) {
+                printString(
+                        "!!!ERROR!!!ThreadA: temporary register t1 changed value while thread was inactive\nNew t1 value:");
+                printInteger(temp);
+                printString("\n");
+            }
         }
     }
     printString("ThreadA finished\n");
@@ -64,10 +70,10 @@ static uint64 fibonacci(uint64 n)
             printInteger(temp);
             printString("\n");
         }
-    }
+    }/*
     printString("Fibonacci ");
     printInteger(n);
-    printString("\n");
+    printString("\n");*/
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
@@ -106,15 +112,19 @@ void workerBodyC_(void *arg)
                 printString("!!!ERROR!!! ThreadC: Fibonacci did not return 987 for n=16\n");
             }
             break;
+        case 32:
+            if(fibRes != 2178309){
+                printString("!!!ERROR!!! ThreadC: Fibonacci did not return 2178309 for n=32\n");
+            }
+            break;
     }
-
 
     printString("ThreadC finished\n");
 }
 
 // Tests thread creation
-int tryThreadCreation(TCB** handle, TCB::Body startFunction, void* arg) {
-    int ret = thread_create(handle, startFunction, arg);
+int tryThreadCreation(TCB* volatile* handle, TCB::Body startFunction, void* arg) {
+    int ret = thread_create((TCB**)handle, startFunction, arg);
     if (ret != 0) {
         printString("!!!ERROR!!! Thread creation failed. ThreadFunction: ");
         printAddress((void*)startFunction);
@@ -136,17 +146,17 @@ int runThreadTest_C_API(){
     printString("Tests thread creation, thread dispatch, thread exit, "
                     "argument passing, stack continuity(every thread changes t1 register value)\n");
 
-    TCB *threads[4];
-
+    TCB* volatile threads[3];
+    /*
     int createMainThread = tryThreadCreation(&threads[0], (TCB::Body)nullptr, nullptr);
 
     if (createMainThread != 0){//err happened
         return -1;
     }
     TCB::running = threads[0];
+    */
 
-
-    if(tryThreadCreation(&threads[1], workerBodyA_, nullptr) == 0){
+    if( tryThreadCreation( &threads[1], workerBodyA_, nullptr) == 0 ){
         printString("ThreadA_ created\n");
     }
     if(tryThreadCreation(&threads[2], workerBodyB_, nullptr) == 0){
@@ -154,7 +164,7 @@ int runThreadTest_C_API(){
     }
     uint64* argC = new uint64;
     *argC = FIBONACCI_ARGUMENT_N;
-    if(tryThreadCreation(&threads[3], workerBodyC_, argC) == 0){
+    if(tryThreadCreation(&threads[0], workerBodyC_, argC) == 0){
         printString("ThreadC_ created\n");
     }
 
@@ -163,7 +173,7 @@ int runThreadTest_C_API(){
 
     while (!(threads[1]->isFinished() &&
              threads[2]->isFinished() &&
-             threads[3]->isFinished() ))
+             threads[0]->isFinished() ))
     {
         thread_dispatch();
     }

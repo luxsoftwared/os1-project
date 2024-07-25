@@ -9,18 +9,36 @@
 
 #include "../tests/MemoryAllocatorTest.cpp"
 #include "../tests/testFunctions.h"
+#include "../h/syscall_c.h"
+#include "../tests/SemaphoreTest.h"
 
 #ifndef DEBUG_LVL
 #define DEBUG_LVL 0
 #endif
 
-//TODO fix:not working anymore bcs create thread was changed
-int mainThreadTest()
-{
-    /*
-    TCB *threads[5];
+// should only be called from main, once on the beginning of the program
+int initMainThread(){
+    TCB* mainThread=nullptr;
+    int createMainThread = thread_create(&mainThread,nullptr,nullptr);
+    if(0!= createMainThread || mainThread==nullptr) {
+        printString("Error creatring main thread");
+        return -1;
+    }
+    TCB::running = mainThread;
+    return 0;
+}
 
-    threads[0] = TCB::createThread(nullptr);
+
+int ThreadTest()
+{
+    TCB *threads[4];
+
+/*
+    int createMainThread = thread_create(&threads[0],nullptr,nullptr);  //TCB::createThread(nullptr);
+    if(0!= createMainThread) {
+        printString("Error creatring main thread");
+        return -1;
+    }
     TCB::running = threads[0];
 
     threads[1] = TCB::createThread(workerBodyA);
@@ -31,14 +49,37 @@ int mainThreadTest()
     printString("ThreadC created\n");
     threads[4] = TCB::createThread(workerBodyD);
     printString("ThreadD created\n");
+     */
+    int create = 0;
+    create = thread_create(&threads[0],(TCB::Body)workerBodyA,nullptr);
+    if(create!=0) {
+        printString("Error creatring thread A");
+        return -1;
+    }
+    create = thread_create(&threads[1],(TCB::Body)workerBodyB,nullptr);
+    if(create!=0) {
+        printString("Error creatring thread B");
+        return -1;
+    }
+    create = thread_create(&threads[2],(TCB::Body)workerBodyC,nullptr);
+    if(create!=0) {
+        printString("Error creatring thread C");
+        return -1;
+    }
+    create = thread_create(&threads[3],(TCB::Body)workerBodyD,nullptr);
+    if(create!=0) {
+        printString("Error creatring thread D");
+        return -1;
+    }
 
-    Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
+    //Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
-    while (!(threads[1]->isFinished() &&
+    while (!(threads[0]->isFinished()&&
+            threads[1]->isFinished() &&
              threads[2]->isFinished() &&
-             threads[3]->isFinished() &&
-             threads[4]->isFinished()))
+             threads[3]->isFinished()
+             ))
     {
         TCB::yield();
     }
@@ -48,7 +89,7 @@ int mainThreadTest()
         delete thread;
     }
     printString("Finished\n");
-*/
+
     return 0;
 }
 
@@ -59,15 +100,67 @@ int mainAllocationTest(){
     return 0;
 }
 
-int main(){
+int mainThreadTest_C_API(){
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     MemoryAllocator::initFreeMem();
-    //Riscv::mc_sip(Riscv::SIP_SSIP);
+    if(initMainThread()!=0){
+        return -1;
+    }
+    Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
     return runThreadTest_C_API();
-
 
 }
 
+int mainThreadTestHere(){
+    Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
+    MemoryAllocator::initFreeMem();
+    if(initMainThread()!=0){
+        return -1;
+    }
+    Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
+    return ThreadTest();
+
+}
+
+int MainMain(){
+    Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
+    MemoryAllocator::initFreeMem();
+    Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
+
+    TCB* mainThread;
+    thread_create(&mainThread, nullptr, nullptr);
+    TCB::running = mainThread;
+    //...
+    return 0;
+}
+
+int mainWRet(){
+    Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
+    MemoryAllocator::initFreeMem();
+    if(initMainThread()!=0){
+        return -1;
+    }
+    Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
+    int ret = SemaphoreTest::testAtomic();
+    if( ret==0)    //if( mainSemClassTest()==0)
+        printString("\nFinished sucessfully\n");
+    else
+        printString("\nTest failed.\n");
+    printInteger(ret);
+    return ret;
+}
+
+
+int main(){
+    Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
+    MemoryAllocator::initFreeMem();
+    if(initMainThread()!=0){
+        return -1;
+    }
+    Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
+    SemaphoreTest::runAll();
+    return 0;
+}
 
 
 

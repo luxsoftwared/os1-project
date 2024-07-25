@@ -10,11 +10,14 @@ void printString(char const *string)
 {
     uint64 sstatus = Riscv::r_sstatus();
     Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
-    while (*string != '\0')
-    {
-        __putc(*string);
-        string++;
-    }
+    if(string)
+        while (*string != '\0')
+        {
+            __putc(*string);
+            string++;
+        }
+    else
+        __putc('Q');
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
 }
 
@@ -28,7 +31,7 @@ void printInteger(uint64 integer)
     uint x;
 
     neg = 0;
-    if (integer < 0)
+    if ((long)integer < 0)
     {
         neg = 1;
         x = -integer;

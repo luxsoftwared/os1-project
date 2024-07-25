@@ -7,6 +7,7 @@
 #include "../lib/console.h"
 #include "../h/MemoryAllocator.hpp"
 #include "../h/print.hpp"
+#include "../h/Sem.h"
 
 enum ABI_codes{
     MEM_ALLOC = 0x01,
@@ -29,18 +30,21 @@ enum ABI_codes{
 
 void Riscv::popSppSpie()
 {
+    //Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
     __asm__ volatile("csrw sepc, ra");
     __asm__ volatile("sret");
 }
 
-//void C_call_handleSupervisorTrap(){Riscv::handleSupervisorTrap();}
+
 
 void Riscv::handleSupervisorTrap()
 {
+
     uint64 scause = r_scause();
     uint64 codeOperation = r_a0();
     uint64 sepc = r_sepc()+4;
     uint64 sstatus = r_sstatus();
+
 
     //printAddress((void*)scause);
     //printString("\t");
@@ -56,16 +60,6 @@ void Riscv::handleSupervisorTrap()
         w_sstatus(sstatus);
         w_sepc(sepc);*/
 
-        /*
-        uint64 sepc = 0;
-        __asm__ volatile ("csrr %[sepc], sepc" : [sepc] "=r"(sepc));
-        sepc = r_sepc();
-        sepc = sepc + 4;
-        uint64 sstatus = 0;
-        __asm__ volatile ("csrr %[sstatus], sstatus" : [sstatus] "=r"(sstatus));
-        sstatus = r_sstatus();
-        Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
-        */
 
         /*
         printAddress((void*)sepc);
@@ -73,7 +67,7 @@ void Riscv::handleSupervisorTrap()
         printAddress((void*)sstatus);
         printString("\t");
 
-        //__asm__ volatile ("mv %[codeOperation], a0" : [codeOperation] "=r"(codeOperation));
+
         printInteger(codeOperation);
         printString("\n");
          */
@@ -114,7 +108,7 @@ void Riscv::handleSupervisorTrap()
                 __asm__ volatile("ld t1, 14*8(fp)"); //getting a4/x14 from stack
                 __asm__ volatile ("mv %[stack], t1" : [stack] "=r"(stack));
                 int returnValue = -10;
-                if(handle){
+                if(handle!= nullptr){
                     *handle = TCB::createThread((TCB::Body)startFunction, stack, arg);
                     if(*handle == nullptr){
                         //printString("ERROR! unsuccesfull TCB::createThread call\n");
@@ -147,18 +141,73 @@ void Riscv::handleSupervisorTrap()
                 //w_sepc(sepc);
                 break;
                 }
-            case SEM_OPEN:
+            case SEM_OPEN:{
+                Sem** volatile handle;
+                uint64 volatile init;
 
-                break;
-            case SEM_CLOSE:
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
 
-                break;
-            case SEM_WAIT:
+                __asm__ volatile("ld t1, 12*8(fp)"); //getting a2/x12 from stack
+                __asm__ volatile ("mv %[init], t1" : [init] "=r"(init));
 
-                break;
-            case SEM_SIGNAL:
+                int returnValue = -10;
+                if(handle!= nullptr){
+                    int ret = Sem::open(handle, init);
+                    if(*handle == nullptr || ret != 0){
+                        //printString("ERROR! unsuccessful Sem::open call\n");
+                        returnValue = -1;
+                    }else{
+                        returnValue = 0;
+                    }
+                }else{
+                    //printString("ERROR! forwarded handle is nullptr\n");
+                    returnValue = -2;
+                }
 
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
                 break;
+            }
+            case SEM_CLOSE:{
+                Sem* volatile handle;
+
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
+
+                int returnValue = -10;
+                returnValue = Sem::close(handle);
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
+                break;
+            }
+            case SEM_WAIT:{
+                Sem* volatile handle;
+
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
+
+                int returnValue = -10;
+                returnValue = Sem::wait(handle);
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
+                break;
+            }
+            case SEM_SIGNAL:{
+                Sem* volatile handle;
+
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
+
+                int returnValue = -10;
+                returnValue = Sem::signal(handle);
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
+                break;
+            }
             case SEM_TIMEDWAIT:
 
                 break;
@@ -203,7 +252,8 @@ void Riscv::handleSupervisorTrap()
         printString("ERROR! SCAUSE:");
         printInteger(scause);
         printString("\tSEPC:");
-        printInteger(sepc);
+        printAddress((void*)sepc);
         printString("\n");
     }
+    //Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 }

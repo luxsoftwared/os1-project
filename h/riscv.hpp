@@ -37,6 +37,8 @@ class Riscv
 {
 public:
 
+
+
     // read register a0
     static uint64 r_a0();
 
@@ -129,6 +131,7 @@ private:
     static void handleSupervisorTrap();
 
 };
+
 
 inline uint64 Riscv::r_a0()
 {

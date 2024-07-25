@@ -5,6 +5,8 @@
 #include "../h/syscall_c.h"
 #include "../lib/hw.h"
 
+#include "../lib/console.h"
+
 
 void* mem_alloc (size_t size){
     size_t sizeInBlocks = (size + MEM_BLOCK_SIZE - 1) / MEM_BLOCK_SIZE;
@@ -49,10 +51,15 @@ int thread_create (TCB** handle, void(*startFunction)(void*)  , void* arg)
             return -3;
         }
     }
-    __asm__ volatile ("mv a1, %0" : : "r"(handle));
-    __asm__ volatile ("mv a2, %0" : : "r"(startFunction));
-    __asm__ volatile ("mv a3, %0" : : "r"(arg));
-    __asm__ volatile ("mv a4, %0" : : "r"(stack));
+    __asm__ volatile ("mv t1, %0" : : "r"(handle));
+    __asm__ volatile ("mv t2, %0" : : "r"(startFunction));
+    __asm__ volatile ("mv t3, %0" : : "r"(arg));
+    __asm__ volatile ("mv t4, %0" : : "r"(stack));
+
+    __asm__ volatile ("mv a1, t1");
+    __asm__ volatile ("mv a2, t2");
+    __asm__ volatile ("mv a3, t3");
+    __asm__ volatile ("mv a4, t4");
     __asm__ volatile ("li a0, 0x11");
     __asm__ volatile ("ecall");
 
@@ -75,4 +82,59 @@ void thread_dispatch (){
     __asm__ volatile ("li a0, 0x13");
     __asm__ volatile ("ecall");
 }
+
+
+int sem_open (Sem** handle, uint64 init){
+    __asm__ volatile ("mv t1, %0" : : "r"(handle));
+    __asm__ volatile ("mv t2, %0" : : "r"(init));
+
+    __asm__ volatile ("mv a2, t2");
+    __asm__ volatile ("mv a1, t1");
+    __asm__ volatile ("li a0, 0x21");
+    __asm__ volatile ("ecall");
+
+    int volatile returnValue;
+    __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
+    return returnValue;
+
+}
+
+int sem_close (Sem* handle){
+    __asm__ volatile ("mv a1, %0" : : "r"(handle));
+    __asm__ volatile ("li a0, 0x22");
+    __asm__ volatile ("ecall");
+
+    int volatile returnValue;
+    __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
+    return returnValue;
+}
+
+int sem_wait (Sem* handle){
+    __asm__ volatile ("mv a1, %0" : : "r"(handle));
+    __asm__ volatile ("li a0, 0x23");
+    __asm__ volatile ("ecall");
+
+    int volatile returnValue;
+    __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
+    return returnValue;
+}
+
+int sem_signal (Sem* handle){
+    __asm__ volatile ("mv a1, %0" : : "r"(handle));
+    __asm__ volatile ("li a0, 0x24");
+    __asm__ volatile ("ecall");
+
+    int volatile returnValue;
+    __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
+    return returnValue;
+}
+
+
+char getc(){
+    return __getc();
+}
+void putc(char c){
+    __putc(c);
+}
+
 
