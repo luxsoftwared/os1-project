@@ -60,3 +60,18 @@ int Sem::unblock(bool semaphoreDeleted) {
 }
 
 
+int Sem::timedwait(Sem* handle, time_t timeout){
+    return -1;
+}
+
+
+int Sem::trywait(Sem* handle){
+    if(handle==nullptr) return -1;
+    if(handle->value == 1){
+        handle->value--;
+        return 0;
+    }else{
+        return 1;
+    }
+}
+

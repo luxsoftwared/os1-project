@@ -20,6 +20,13 @@ public:
     static int close(Sem* handle);
     static int wait(Sem* handle);
     static int signal(Sem* handle);
+    static int timedwait(Sem* handle, time_t timeout);
+    /**
+     * @brief Try to decrement the semaphore value; if it is greater than 0, decrement it and return 0, otherwise return 1, or return -1 in case of an error
+     * @param handle
+     * @return
+     */
+    static int trywait(Sem* handle);
 
     int getValue() const {
         return value;

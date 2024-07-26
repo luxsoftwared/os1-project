@@ -129,6 +129,29 @@ int sem_signal (Sem* handle){
     return returnValue;
 }
 
+int sem_timedwait (Sem* handle, time_t timeout){
+    __asm__ volatile ("mv t1, %0" : : "r"(handle));
+    __asm__ volatile ("mv t2, %0" : : "r"(timeout));
+
+    __asm__ volatile ("mv a2, t2");
+    __asm__ volatile ("mv a1, t1");
+    __asm__ volatile ("li a0, 0x25");
+    __asm__ volatile ("ecall");
+
+    int volatile returnValue;
+    __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
+    return returnValue;
+}
+
+int sem_trywait (Sem* handle){
+    __asm__ volatile ("mv a1, %0" : : "r"(handle));
+    __asm__ volatile ("li a0, 0x26");
+    __asm__ volatile ("ecall");
+
+    int volatile returnValue;
+    __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
+    return returnValue;
+}
 
 char getc(){
     return __getc();

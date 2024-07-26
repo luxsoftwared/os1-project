@@ -52,21 +52,11 @@ void Riscv::handleSupervisorTrap()
     {
         // interrupt: no; cause code: environment call from U-mode(8) or S-mode(9)
 
-        /* code for syncr thread inter from V7 :::YIELD change context
-        uint64 volatile sepc = r_sepc() + 4;
-        uint64 volatile sstatus = r_sstatus();
-        TCB::timeSliceCounter = 0;
-        TCB::dispatch();
-        w_sstatus(sstatus);
-        w_sepc(sepc);*/
-
-
         /*
         printAddress((void*)sepc);
         printString("\t");
         printAddress((void*)sstatus);
         printString("\t");
-
 
         printInteger(codeOperation);
         printString("\n");
@@ -125,20 +115,23 @@ void Riscv::handleSupervisorTrap()
                 __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
                 break;
             }
-            case THREAD_EXIT:{// TODO handle situation when it can return error, neg
-                TCB::running->setFinished(true);
-                TCB::timeSliceCounter = 0;
-                TCB::dispatch();
-                __asm__ volatile ("li t0, 0");
+            case THREAD_EXIT:{
+                int returnValue = 0;
+                if(TCB::running == nullptr) {
+                    returnValue = -1;
+                }
+                else{
+                    TCB::running->setFinished(true);
+                    TCB::timeSliceCounter = 0;
+                    TCB::dispatch();
+                }
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
                 __asm__ volatile ("sw t0, 80(x8)");
             }
             case THREAD_DISPATCH:{
-                //uint64 volatile sepc = r_sepc() + 4;
-                //uint64 volatile sstatus = r_sstatus();
                 TCB::timeSliceCounter = 0;
                 TCB::dispatch();
-                //w_sstatus(sstatus);
-                //w_sepc(sepc);
                 break;
                 }
             case SEM_OPEN:{
@@ -208,9 +201,45 @@ void Riscv::handleSupervisorTrap()
                 __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
                 break;
             }
-            case SEM_TIMEDWAIT:
+            case SEM_TIMEDWAIT: {
+                Sem* volatile handle;
+                time_t volatile timeout;
 
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
+
+                __asm__ volatile("ld t1, 12*8(fp)"); //getting a2/x12 from stack
+                __asm__ volatile ("mv %[timeout], t1" : [timeout] "=r"(timeout));
+
+                int returnValue = -10;
+                returnValue = Sem::timedwait(handle, timeout);
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
                 break;
+            }
+            case SEM_TRYWAIT:{
+                Sem* volatile handle;
+
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
+
+                int returnValue = -10;
+                returnValue = Sem::trywait(handle);
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
+                break;
+            }
+            case TIME_SLEEP:{
+                break;
+            }
+            case GETC:{
+                break;
+            }
+            case PUTC:{
+                break;
+            }
             default:{
                 printString("ERROR! CODE OPERATION:");
                 printInteger(codeOperation);
@@ -219,7 +248,7 @@ void Riscv::handleSupervisorTrap()
             }
 
         }
-        //Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
+
         w_sstatus(sstatus);
         w_sepc(sepc);
 
@@ -232,14 +261,12 @@ void Riscv::handleSupervisorTrap()
         TCB::timeSliceCounter++;
         if (TCB::timeSliceCounter >= TCB::running->getTimeSlice())
         {
-            //uint64 sepc = r_sepc();
-            //uint64 sstatus = r_sstatus();
             TCB::timeSliceCounter = 0;
             TCB::dispatch();
-            w_sstatus(sstatus);
-            w_sepc(sepc);
-        }
 
+        }
+        w_sstatus(sstatus);
+        w_sepc(sepc);
     }
     else if (scause == 0x8000000000000009UL)
     {
@@ -255,5 +282,5 @@ void Riscv::handleSupervisorTrap()
         printAddress((void*)sepc);
         printString("\n");
     }
-    //Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
+
 }

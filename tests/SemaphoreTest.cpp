@@ -97,13 +97,13 @@ int SemaphoreTest::mutex = 1;
 void SemaphoreTest::workerBodyA(void* arg) {
     Sem* sem = (Sem*)arg;
 
-    while(test_and_set(&mutex, 1, 0));
+    //while(test_and_set(&mutex, 1, 0));
     printString("A: Value of semaphore before wait:");
     printInteger(sem->getValue());
     printString("\n");
     printString("Wait called for workerA\n");
     sem_wait(sem);
-    test_and_set(&mutex, 0, 1);
+    //test_and_set(&mutex, 0, 1);
 
     printString("Waiting ended for workerA\n");
 
@@ -126,13 +126,13 @@ void SemaphoreTest::workerBodyA(void* arg) {
 void SemaphoreTest::workerBodyB(void* arg) {
     Sem* sem = (Sem*)arg;
 
-    while(test_and_set(&mutex, 1, 0));
+    //while(test_and_set(&mutex, 1, 0));
     printString("B: Value of semaphore before wait:");
     printInteger(sem->getValue());
     printString("\n");
     printString("Wait called for workerB\n");
     sem_wait(sem);
-    test_and_set(&mutex, 0, 1);
+    //test_and_set(&mutex, 0, 1);
 
     printString("Waiting ended for workerB\n");
 
