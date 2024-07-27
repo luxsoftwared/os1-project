@@ -232,6 +232,20 @@ void Riscv::handleSupervisorTrap()
                 break;
             }
             case TIME_SLEEP:{
+                time_t volatile time;
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[time], t1" : [time] "=r"(time));
+                int returnValue = 0;
+                if(TCB::running == nullptr) {
+                    returnValue = -1;
+                }
+                else{
+                    TCB::running->setBlocked(true);
+                    Scheduler::putToSleepQueue(TCB::running, time);
+                    TCB::dispatch();
+                }
+
+
                 break;
             }
             case GETC:{
@@ -259,6 +273,19 @@ void Riscv::handleSupervisorTrap()
         //TIMER change context
         Riscv::mc_sip(Riscv::SIP_SSIP);
         TCB::timeSliceCounter++;
+
+        if(Scheduler::sleepingThreadsQueue.peekFirst() != nullptr){
+            TCB::timeSliceCounterForSleeping++;
+            while(Scheduler::sleepingThreadsQueue.peekFirst() != nullptr && TCB::timeSliceCounterForSleeping >= Scheduler::sleepingThreadsQueue.peekFirst()->getSleepTime()){
+                TCB::timeSliceCounterForSleeping = 0;
+                TCB *thread = Scheduler::sleepingThreadsQueue.removeFirst();
+                if (thread == nullptr) return;
+                if(thread->isBlocked() == false)    continue;//if thread is not blocked(it already unblocked via signal unblock), check next one
+                thread->setBlocked(false);
+                Scheduler::put(thread);
+            }
+        }
+
         if (TCB::timeSliceCounter >= TCB::running->getTimeSlice())
         {
             TCB::timeSliceCounter = 0;

@@ -153,6 +153,16 @@ int sem_trywait (Sem* handle){
     return returnValue;
 }
 
+int time_sleep (time_t time){
+    __asm__ volatile ("mv a1, %0" : : "r"(time));
+    __asm__ volatile ("li a0, 0x31");
+    __asm__ volatile ("ecall");
+
+    int volatile returnValue;
+    __asm__ volatile ("mv %0, a0" : "=r"(returnValue));
+    return returnValue;
+}
+
 char getc(){
     return __getc();
 }

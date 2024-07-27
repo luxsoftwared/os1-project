@@ -9,6 +9,7 @@
 TCB *TCB::running = nullptr;
 
 uint64 TCB::timeSliceCounter = 0;
+uint64 TCB::timeSliceCounterForSleeping = 0;
 
 TCB *TCB::createThread(Body body, void* stack_space, void* arg)
 {
@@ -28,7 +29,6 @@ void TCB::dispatch()
     TCB *old = running;
     if (!old->isFinished() && !old->isBlocked() ) { Scheduler::put(old); }
     running = Scheduler::get();
-
     TCB::contextSwitch(&old->context, &running->context);
 }
 

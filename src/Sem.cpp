@@ -51,8 +51,11 @@ int Sem::block() {
 
 
 int Sem::unblock(bool semaphoreDeleted) {
-    TCB* thread = blockedThreads.removeFirst();
-    if(thread == nullptr) return -1;
+    TCB *thread= nullptr;
+    do {
+        thread = blockedThreads.removeFirst();
+        if (thread == nullptr) return -1;
+    }while(thread->isBlocked() == false); //if thread is not blocked(it already unblocked via timer wake up), remove next one
     thread->setBlocked(false);
     thread->setSemaphoreDeleted(semaphoreDeleted);
     Scheduler::put(thread);

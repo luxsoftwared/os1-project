@@ -22,11 +22,19 @@ public:
 
     void setBlocked(bool value) { blocked = value; }
 
+    bool isAsleep() const { return asleep; }
+
+    void setAsleep(bool value) { asleep = value; }
+
     bool isSemaphoreDeleted() const { return semaphoreDeleted; }
 
     void setSemaphoreDeleted(bool value) { semaphoreDeleted = value; }
 
     uint64 getTimeSlice() const { return timeSlice; }
+
+    uint64 getSleepTime() const { return sleepTime; }
+
+    void setSleepTime(uint64 value) { sleepTime = value; }
 
     using Body = void (*)(void*);
 
@@ -35,6 +43,8 @@ public:
     static void yield();
 
     static TCB *running;
+
+
 
 private:
     // body is nullptr for main, is shpuldnt execute from beggining and it already has stack and shoul not be put in scheduler during creation,
@@ -64,12 +74,15 @@ private:
     uint64* stack;
     Context context;
     uint64 timeSlice;
+    uint64 sleepTime = 0;
     bool finished;
     bool blocked;
+    bool asleep = false;
     bool semaphoreDeleted = false;
 
     friend class Riscv;
     friend class Sem;
+    friend class Scheduler;
 
     /**
     * Setting the thread up for initial execution if its body, getting spp and spie
@@ -88,6 +101,7 @@ private:
     static void dispatch();
 
     static uint64 timeSliceCounter;
+    static uint64 timeSliceCounterForSleeping;
 
     static uint64 constexpr STACK_SIZE = DEFAULT_STACK_SIZE;//1024 uint64
     static uint64 constexpr TIME_SLICE = DEFAULT_TIME_SLICE;

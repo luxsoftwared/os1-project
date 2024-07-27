@@ -13,11 +13,16 @@ class Scheduler
 {
 private:
     static List<TCB> readyThreadQueue;
+    static List<TCB> sleepingThreadsQueue;
 
 public:
     static TCB *get();
 
     static void put(TCB *ccb);
+
+    static void putToSleepQueue(TCB *tcb, time_t sleepTime);
+
+    static void removeFromSleepQueue(TCB *tcb);
 
 };
 

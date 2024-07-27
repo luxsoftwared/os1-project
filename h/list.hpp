@@ -8,7 +8,7 @@
 template<typename T>
 class List
 {
-private:
+public:
     struct Elem
     {
         T *data;
