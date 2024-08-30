@@ -16,7 +16,7 @@ void Scheduler::put(TCB *ccb)
 {
     readyThreadQueue.addLast(ccb);
 }
-
+/*
 void Scheduler::putToSleepQueue(TCB *tcb, uint64 sleepTime)
 {
     int sleepDifference = 0;
@@ -67,3 +67,5 @@ void Scheduler::putToSleepQueue(TCB *tcb, uint64 sleepTime)
 }
 
 void Scheduler::removeFromSleepQueue(TCB *tcb);
+
+ */

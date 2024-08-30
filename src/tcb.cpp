@@ -16,6 +16,20 @@ TCB *TCB::createThread(Body body, void* stack_space, void* arg)
     return new TCB(body, stack_space, arg, TIME_SLICE);
 }
 
+TCB *TCB::createThreadWithoutStarting(Body body, void* stack_space, void* arg)
+{
+    return new TCB(body, stack_space, arg, TIME_SLICE, true);
+}
+
+int TCB::startThread(TCB *handle)
+{
+    if(handle == nullptr) { return -1; }
+    if (running == nullptr) running = handle;
+    else Scheduler::put(handle);
+    return 0;
+}
+
+
 
 void TCB::yield()
 {
@@ -37,11 +51,12 @@ void TCB::dispatch()
 void TCB::threadWrapper()
 {
     //change mode (from S to U? jumped here from handler wich is S mode)
-    // take SPP val and set SPIE  and restore ||||ovo dole
+    // take SPP val and set SPIE  and restore ||
     Riscv::popSppSpie(); //stavlja ra u sepc(jer tren sepc je od stare niti), i sa sret skida spp spie i vraca se ovde
     // no//bcs on start of the execution thread pushes random values on stack during initial contextSwitch(only second half is done)
     running->body(running->arg);
     running->setFinished(true);
+
     TCB::yield();
 }
 

@@ -10,6 +10,7 @@
 #include "../tests/MemoryAllocatorTest.cpp"
 #include "../tests/testFunctions.h"
 #include "../h/syscall_c.h"
+#include "../h/syscall_cpp.hpp"
 #include "../tests/SemaphoreTest.h"
 
 #ifndef DEBUG_LVL
@@ -24,6 +25,7 @@ int initMainThread(){
         printString("Error creatring main thread");
         return -1;
     }
+    mainThread->setSystemThread(true);
     TCB::running = mainThread;
     return 0;
 }
@@ -150,6 +152,14 @@ int mainWRet(){
     return ret;
 }
 
+void userMain();
+
+void userMainWrapper(void* arg){
+    userMain();
+    //((Semaphore*)arg )->signal();
+    //thread_exit();
+}
+
 
 int main(){
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
@@ -158,7 +168,35 @@ int main(){
         return -1;
     }
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
-    SemaphoreTest::runAll();
+
+    //userMain();       V1
+
+/*  V2
+    Semaphore sem(0);
+    Thread(userMainWrapper, &sem);
+    sem.wait();
+*/
+
+    int *a=new int;
+    *a=1;
+    printInteger((uint64)a);
+    delete a;
+    printString("Deleted a!\n");
+
+    TCB* userMainThread;
+    if( thread_create(&userMainThread, userMainWrapper, nullptr) != 0){
+        printString("Error creating user main thread\n");
+        return 0;
+    }
+
+    while(!userMainThread->isFinished()){
+        thread_dispatch();
+    }
+
+    printString("Mainfinished\n");
+
+    // manually shutting down the system
+    Riscv::shutDownEmulator();
     return 0;
 }
 

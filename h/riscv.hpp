@@ -125,12 +125,20 @@ public:
     // supervisor trap
     static void supervisorTrap();
 
+    static void shutDownEmulator();
+
 private:
 
     // supervisor trap handler
     static void handleSupervisorTrap();
 
 };
+
+inline void Riscv::shutDownEmulator(){
+    __asm__ volatile ("li t1, 0x5555");
+    __asm__ volatile ("li t2, 0x100000");
+    __asm__ volatile ("sw t1, 0(t2)");
+}
 
 
 inline uint64 Riscv::r_a0()

@@ -7,9 +7,11 @@
 
 #include "list.hpp"
 #include "tcb.hpp"
+#include "MemoryAllocator.hpp"
 
 //0 if succesfull, 1 if not
 extern "C" uint64 test_and_set(int* lock, uint64 expected, uint64 desired);
+
 
 
 class Sem {
@@ -31,6 +33,30 @@ public:
     int getValue() const {
         return value;
     }
+/*
+    using size_t = decltype(sizeof(0));
+
+
+    void *operator new(size_t n)
+    {
+        return MemoryAllocator::mem_alloc(MemoryAllocator::bytesInBlocks(n)) ;
+    }
+
+    void *operator new[](size_t n)
+    {
+        return MemoryAllocator::mem_alloc(MemoryAllocator::bytesInBlocks(n))  ;
+    }
+
+    void operator delete(void *p) //noexcept
+    {
+        MemoryAllocator::mem_free(p);
+    }
+
+    void operator delete[](void *p) //noexcept
+    {
+        MemoryAllocator::mem_free(p);
+    }
+*/
 private:
     Sem(int init = 1) : value(init) {}
 
@@ -45,6 +71,8 @@ private:
 
 
 };
+
+typedef Sem* sem_t;
 
 
 #endif //PROJECT_BASE_V1_1_SEM_H

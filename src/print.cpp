@@ -5,7 +5,7 @@
 #include "../h/print.hpp"
 #include "../h/riscv.hpp"
 #include "../lib/console.h"
-
+/*
 void printString(char const *string)
 {
     uint64 sstatus = Riscv::r_sstatus();
@@ -19,7 +19,7 @@ void printString(char const *string)
     else
         __putc('Q');
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
-}
+}*/
 
 void printInteger(uint64 integer)
 {

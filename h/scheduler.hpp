@@ -19,11 +19,11 @@ public:
     static TCB *get();
 
     static void put(TCB *ccb);
-
+/*
     static void putToSleepQueue(TCB *tcb, time_t sleepTime);
 
     static void removeFromSleepQueue(TCB *tcb);
-
+*/
 };
 
 #endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_SCHEDULER_HPP

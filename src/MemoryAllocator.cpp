@@ -151,3 +151,8 @@ void* MemoryAllocator::joinBlocks(MemElem* block1, MemElem* block2){
     }
     return nullptr;
 }
+
+
+size_t MemoryAllocator::bytesInBlocks(MemoryAllocator::size_t n) {
+    return (n + MEM_BLOCK_SIZE - 1) / MEM_BLOCK_SIZE;
+}

@@ -73,6 +73,10 @@ public:
      * @return 0 for success; negative in case of an error
      */
     static int mem_free(void* addr);
+
+    using size_t = decltype(sizeof(0));
+
+    static size_t bytesInBlocks(size_t n);
 };
 
 

@@ -15,8 +15,8 @@ enum ABI_codes{
     THREAD_CREATE = 0x11,
     THREAD_EXIT = 0x12,
     THREAD_DISPATCH = 0x13,
-    //THREAD_CREATE_ONLY = 0x14,
-    //THREAD_START = 0x15,
+    THREAD_CREATE_WITHOUT_START = 0x14,
+    THREAD_START = 0x15,
     SEM_OPEN = 0x21,
     SEM_CLOSE = 0x22,
     SEM_WAIT = 0x23,
@@ -32,6 +32,12 @@ void Riscv::popSppSpie()
 {
     //Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
     __asm__ volatile("csrw sepc, ra");
+    if(TCB::running->isSystemThread())
+        //__asm__ volatile("csrc sstatus, %0" : : "r" ());
+        ms_sstatus(1UL<<8);
+    else
+        mc_sstatus(1UL<<8);
+        //__asm__ volatile("csrrw ra, sscratch, zero");
     __asm__ volatile("sret");
 }
 
@@ -110,6 +116,51 @@ void Riscv::handleSupervisorTrap()
                     //printString("ERROR! forwarded handle is nullptr\n");
                     returnValue = -2;
                 }
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
+                break;
+            }
+            case THREAD_CREATE_WITHOUT_START:{
+                TCB** volatile handle;
+                void* volatile startFunction;
+                void* volatile arg;
+                void* volatile stack;
+
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
+
+                __asm__ volatile("ld t1, 12*8(fp)"); //getting a2/x12 from stack
+                __asm__ volatile ("mv %[startFunction], t1" : [startFunction] "=r"(startFunction));
+
+                __asm__ volatile("ld t1, 13*8(fp)"); //getting a3/x13 from stack
+                __asm__ volatile ("mv %[arg], t1" : [arg] "=r"(arg));
+
+                __asm__ volatile("ld t1, 14*8(fp)"); //getting a4/x14 from stack
+                __asm__ volatile ("mv %[stack], t1" : [stack] "=r"(stack));
+                int returnValue = -10;
+                if(handle!= nullptr){
+                    *handle = TCB::createThreadWithoutStarting((TCB::Body)startFunction, stack, arg);
+                    if(*handle == nullptr){
+                        //printString("ERROR! unsuccesfull TCB::createThread call\n");
+                        returnValue = -1;
+                    }else{
+                        returnValue = 0;
+                    }
+                }else{
+                    //printString("ERROR! forwarded handle is nullptr\n");
+                    returnValue = -2;
+                }
+
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
+                break;
+            }
+            case THREAD_START:{
+                TCB* volatile thread;
+                __asm__ volatile ("mv %0, a1" : "=r" (thread));
+                int returnValue;
+                returnValue = thread->startThread(thread);
 
                 __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
                 __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
@@ -232,6 +283,7 @@ void Riscv::handleSupervisorTrap()
                 break;
             }
             case TIME_SLEEP:{
+                /*
                 time_t volatile time;
                 __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
                 __asm__ volatile ("mv %[time], t1" : [time] "=r"(time));
@@ -244,14 +296,30 @@ void Riscv::handleSupervisorTrap()
                     Scheduler::putToSleepQueue(TCB::running, time);
                     TCB::dispatch();
                 }
-
+                */
 
                 break;
             }
             case GETC:{
+
+                char volatile returnValue;
+                //printString("getc u handelru pre");
+                returnValue = __getc();
+                //printString("getc u handelru posle");
+                __asm__ volatile ("mv a0, %0" : : "r"(returnValue));
+                __asm__ volatile("sd a0, 10*8(fp)"); //saving ret value on stack, in place where supervisorTrap is holding x10(a0)
+
                 break;
             }
             case PUTC:{
+
+                char volatile ch;
+
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[ch], t1" : [ch] "=r"(ch));
+
+                __putc(ch);
+
                 break;
             }
             default:{
@@ -271,9 +339,12 @@ void Riscv::handleSupervisorTrap()
     {
         // interrupt: yes; cause code: supervisor software interrupt (CLINT; machine timer interrupt)
         //TIMER change context
-        Riscv::mc_sip(Riscv::SIP_SSIP);
-        TCB::timeSliceCounter++;
 
+        Riscv::mc_sip(Riscv::SIP_SSIP);
+        //TCB::timeSliceCounter++;
+
+
+/*for sleep and timed
         if(Scheduler::sleepingThreadsQueue.peekFirst() != nullptr){
             TCB::timeSliceCounterForSleeping++;
             while(Scheduler::sleepingThreadsQueue.peekFirst() != nullptr && TCB::timeSliceCounterForSleeping >= Scheduler::sleepingThreadsQueue.peekFirst()->getSleepTime()){
@@ -285,13 +356,16 @@ void Riscv::handleSupervisorTrap()
                 Scheduler::put(thread);
             }
         }
+*/
 
+    /*for time slice
         if (TCB::timeSliceCounter >= TCB::running->getTimeSlice())
         {
             TCB::timeSliceCounter = 0;
             TCB::dispatch();
 
         }
+    */
         w_sstatus(sstatus);
         w_sepc(sepc);
     }
@@ -308,6 +382,8 @@ void Riscv::handleSupervisorTrap()
         printString("\tSEPC:");
         printAddress((void*)sepc);
         printString("\n");
+        Riscv::shutDownEmulator();
+
     }
 
 }
