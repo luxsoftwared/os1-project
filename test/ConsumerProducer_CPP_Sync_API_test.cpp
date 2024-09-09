@@ -2,6 +2,8 @@
 
 #include "buffer_CPP_API.hpp"
 
+#include "../tests/MemoryAllocatorTest.cpp"
+
 static Semaphore* waitForAll;
 
 struct thread_data {
@@ -169,18 +171,19 @@ void producerConsumer_CPP_Sync_API() {
 
     for (int i = 0; i <= threadNum; i++) {
         waitForAll->wait();
-        printString("\nwaitForAll->wait()\n");
+        //printString("\nwaitForAll->wait()\n");
     }
 
     for (int i = 0; i < threadNum; i++) {
-        printString("before delete thread\n");
+        //MemoryAllocatorTest::printMemoryLists();
+        //printString("before delete thread\n");
         delete threads[i];
-        printString("after delete thread\n");
+        //printString("after delete thread\n");
     }
-    printString("after delete threads end\n");
+    //printString("after delete threads end\n");
     delete consumerThread;
     delete waitForAll;
     delete buffer;
-    printString("kraj CP_CPP_Sync_API\n");
+    //printString("kraj CP_CPP_Sync_API\n");
 }
 

@@ -151,6 +151,9 @@ void Threads_CPP_API_test() {
         Thread::dispatch();
     }
 
-    for (auto thread: threads) { printString("bris thr");   delete thread;
-        printString("obrisan thr");}
+    for (auto thread: threads) {
+        printString("bris thr");
+        delete thread;
+        printString("obrisan thr");
+    }
 }

@@ -152,10 +152,29 @@ int mainWRet(){
     return ret;
 }
 
+void testDeleteArr(){
+    printString("testDeleteArr Entered\n");
+    int* niz[3];
+    for(int i=0; i<3; i++){
+        niz[i]=new int;
+    }
+
+    for(int i=0; i<3; i++){
+        printString("before delete\n");
+        delete niz[i];
+        printString("after delete\n");
+    }
+    printString("Deleted niz!\n");
+}
+
 void userMain();
 
 void userMainWrapper(void* arg){
+    //testDeleteArr();
+
     userMain();
+    ((Semaphore*)arg)->signal();
+    thread_exit();
     //((Semaphore*)arg )->signal();
     //thread_exit();
 }
@@ -177,27 +196,37 @@ int main(){
     sem.wait();
 */
 
-    int *a=new int;
-    *a=1;
-    printInteger((uint64)a);
-    delete a;
-    printString("Deleted a!\n");
 
+
+/* ------------------------ACTUAL MAIN CODE-----------------------  ---------------------------------------------------------------*/
     TCB* userMainThread;
-    if( thread_create(&userMainThread, userMainWrapper, nullptr) != 0){
+    Semaphore sem;
+    if( thread_create(&userMainThread, userMainWrapper, &sem) != 0){
         printString("Error creating user main thread\n");
         return 0;
     }
 
+    sem.wait();
+    /*
     while(!userMainThread->isFinished()){
         thread_dispatch();
-    }
+    }*/
 
     printString("Mainfinished\n");
 
     // manually shutting down the system
     Riscv::shutDownEmulator();
     return 0;
+}
+
+
+
+void testUnary(){
+        uint64* prom=new uint64 ;
+        *prom=1;
+        printString("dodeljeno\n");
+        delete prom;
+        printString("Deleted prom!\n");
 }
 
 

@@ -4,7 +4,8 @@
 
 #include "../h/print.hpp"
 #include "../h/riscv.hpp"
-#include "../lib/console.h"
+//#include "../lib/console.h"
+#include "../h/syscall_c.h"
 /*
 void printString(char const *string)
 {
@@ -13,13 +14,15 @@ void printString(char const *string)
     if(string)
         while (*string != '\0')
         {
-            __putc(*string);
+            putc(*string);
             string++;
         }
     else
-        __putc('Q');
+        putc('Q');
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
-}*/
+}
+*/
+
 
 void printInteger(uint64 integer)
 {
@@ -48,7 +51,7 @@ void printInteger(uint64 integer)
     if (neg)
         buf[i++] = '-';
 
-    while (--i >= 0) { __putc(buf[i]); }
+    while (--i >= 0) { putc(buf[i]); }
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
 }
 
@@ -69,6 +72,6 @@ void printAddress(void* address){
     buf[i++] = 'x';
     buf[i++] = '0';
 
-    while (--i >= 0) { __putc(buf[i]); }
+    while (--i >= 0) { putc(buf[i]); }
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
 }

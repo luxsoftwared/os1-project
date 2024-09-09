@@ -14,8 +14,9 @@ Thread::Thread (void (*body)(void*), void* arg){
 }
 
 Thread::~Thread (){
-    thread_exit();
-    mem_free(myHandle);
+    //thread_exit(); NE TREBA, ovo radi exit iz trenutne niti, a ja brisem iz zpoljne
+
+    //mem_free(myHandle);
 }
 
 void Thread::runWrapper(void* thread){
@@ -98,7 +99,7 @@ size_t bytesInBlocks(size_t n)
 
 void *operator new(size_t n)
 {
-    //printString("before new\n");
+    //printString("before new operator\n");
     return mem_alloc(n);
 }
 
@@ -109,12 +110,14 @@ void *operator new[](size_t n)
 
 void operator delete(void *p) noexcept
 {
-    //printString("before delete\n");
+    //printString("before delete operator\n");
     mem_free(p);
-    //printString("after delete\n");
+    //printString("after delete operator\n");
 }
 
 void operator delete[](void *p) noexcept
 {
+    //printString("before delete[] operator[]\n");
     mem_free(p);
+    //printString("after delete[] operator\n");
 }
