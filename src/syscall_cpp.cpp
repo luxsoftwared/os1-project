@@ -14,8 +14,8 @@ Thread::Thread (void (*body)(void*), void* arg){
 }
 
 Thread::~Thread (){
-    thread_exit();
-    mem_free(myHandle);
+    //thread_exit();
+    //mem_free(myHandle);
 }
 
 void Thread::runWrapper(void* thread){
@@ -42,6 +42,9 @@ int Thread::sleep (time_t time){
    // return thread_sleep(time); TREBA ZA 4 TEK**************************
 }
 
+void Thread::join() {
+    thread_join(&myHandle);
+}
 
 
 int Semaphore::wait (){

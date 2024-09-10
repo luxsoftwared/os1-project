@@ -60,5 +60,15 @@ void TCB::threadWrapper()
     TCB::yield();
 }
 
+void TCB::thread_join(TCB **handle) {
+    if(handle == nullptr || *handle == nullptr ) { printString("join odradjen nad nullptr"); return; }
+
+    if(! (*handle)->isFinished() ) { printString("not finished"); }
+
+    while(! ((*handle)->isFinished()) ) {
+        TCB::dispatch();
+    }
+}
+
 
 

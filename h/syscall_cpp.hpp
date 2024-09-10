@@ -21,6 +21,7 @@ public:
     int start ();
     static void dispatch ();
     static int sleep (time_t);
+    void join();
 
     static void runWrapper(void* thread);
 protected:

@@ -154,10 +154,97 @@ int mainWRet(){
 
 void userMain();
 
+class MyThreadClassA:public Thread{
+    void run() override{
+        printString("Thread A started\n");
+        for(int i=0;i<1000;i++){
+            for(int j=0;j<1000;j++){
+                int a = i+j;
+                a--;
+                Thread::dispatch();
+            }
+            if(i%100==0){
+                printString("Thread A\n");
+            }
+        }
+        printString("Thread A finished\n");
+    }
+};
+
+class MyThreadClassB:public Thread{
+    void run() override{
+        printString("Thread B started\n");
+        for(int i=0;i<1000;i++){
+            for(int j=0;j<1000;j++){
+                int a = i+j;
+                a--;
+                Thread::dispatch();
+            }
+            if( (i%100)==0){
+                printString("Thread B\n");
+            }
+        }
+        printString("Thread B finished\n");
+    }
+};
+
+
+class MyThreadClassC:public Thread{
+    Thread* threadA;
+    Thread* threadB;
+    Semaphore* sem;
+public:
+    MyThreadClassC(Thread* _threadA, Thread* _threadB, Semaphore* _sem):threadA(_threadA), threadB(_threadB), sem(_sem){}
+
+    void run() override{
+        printString("Thread C started\n");
+        threadA->join();
+        printString("Thread C - after thread A\n");
+        threadB->join();
+        printString("Thread C - after thread B\n");
+        for(int i=0;i<1000;i++){
+            for(int j=0;j<1000;j++){
+                int a = i+j;
+                a--;
+                Thread::dispatch();
+            }
+            if(i%100==0){
+                printString("Thread C\n");
+            }
+        }
+        printString("Thread C finished\n");
+        sem->signal();
+    }
+};
+
+
+
+void testThreadJoin(){
+    Thread* threads[3];
+    Semaphore sem(0);
+
+    threads[0]=new MyThreadClassA();
+    threads[1]=new MyThreadClassB();
+    threads[2]=new MyThreadClassC(threads[0], threads[1], &sem);
+
+    threads[2]->start();
+    threads[0]->start();
+    threads[1]->start();
+
+
+    Thread::dispatch();
+    sem.wait();
+
+    for (int i = 0; i < 3; i++) {
+        delete threads[i];
+    }
+}
+
 void userMainWrapper(void* arg){
-    userMain();
-    //((Semaphore*)arg )->signal();
-    //thread_exit();
+    //userMain();
+    testThreadJoin();
+    ((Semaphore*)arg )->signal();
+    thread_exit();
 }
 
 
@@ -177,21 +264,20 @@ int main(){
     sem.wait();
 */
 
-    int *a=new int;
-    *a=1;
-    printInteger((uint64)a);
-    delete a;
-    printString("Deleted a!\n");
 
     TCB* userMainThread;
-    if( thread_create(&userMainThread, userMainWrapper, nullptr) != 0){
+    Semaphore sem(0);
+
+    if( thread_create(&userMainThread, userMainWrapper, &sem) != 0){
         printString("Error creating user main thread\n");
         return 0;
     }
+    thread_dispatch();
 
-    while(!userMainThread->isFinished()){
+    sem.wait();
+    /*while(!userMainThread->isFinished()){
         thread_dispatch();
-    }
+    }*/
 
     printString("Mainfinished\n");
 

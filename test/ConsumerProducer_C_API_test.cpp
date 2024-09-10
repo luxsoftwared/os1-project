@@ -22,7 +22,7 @@ static void producerKeyboard(void *arg) {
         data->buffer->put(key);
         i++;
 
-        //if (i % (10 * data->id) == 0)
+        if (i % (10 * data->id) == 0)
             thread_dispatch();
 
     }

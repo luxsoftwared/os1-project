@@ -11,6 +11,8 @@ void* mem_alloc (size_t size);
 
 int mem_free (void*);
 
+void thread_join(TCB** handle);
+
 int thread_create (TCB** handle, void(*startFunction)(void*)  , void* arg);
 
 int thread_create_without_starting(TCB** handle, void(*startFunction)(void*)  , void* arg);

@@ -17,6 +17,7 @@ enum ABI_codes{
     THREAD_DISPATCH = 0x13,
     THREAD_CREATE_WITHOUT_START = 0x14,
     THREAD_START = 0x15,
+    THREAD_JOIN = 0x16,
     SEM_OPEN = 0x21,
     SEM_CLOSE = 0x22,
     SEM_WAIT = 0x23,
@@ -185,6 +186,17 @@ void Riscv::handleSupervisorTrap()
                 TCB::dispatch();
                 break;
                 }
+            case THREAD_JOIN:{
+
+                TCB** volatile handle;
+
+                __asm__ volatile("ld t1, 11*8(fp)"); //getting a1/x11 from stack
+                __asm__ volatile ("mv %[handle], t1" : [handle] "=r"(handle));
+
+                TCB::thread_join(handle);
+
+            break;
+            }
             case SEM_OPEN:{
                 Sem** volatile handle;
                 uint64 volatile init;

@@ -45,6 +45,8 @@ public:
 
     static TCB *createThreadWithoutStarting(Body body, void* stack_space, void* arg);
 
+    static void thread_join(TCB** handle);
+
     static int startThread(TCB *handle);
 
     static void yield();

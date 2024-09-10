@@ -41,7 +41,7 @@ void ProducerKeyboard::producerKeyboard(void *arg) {
     td->buffer->put('!');
 
     data->wait->signal();
-    printString("producerKeyboard end\n");
+    //printString("producerKeyboard end\n");
 }
 
 class ProducerSync:public Thread {
@@ -69,7 +69,7 @@ void ProducerSync::producer(void *arg) {
     }
 
     data->wait->signal();
-    printString("producer end\n");
+    //printString("producer end\n");
 }
 
 class ConsumerSync:public Thread {
@@ -109,7 +109,7 @@ void ConsumerSync::consumer(void *arg) {
     }
 
     data->wait->signal();
-    printString("consumer end\n");
+    //printString("consumer end\n");
 }
 
 void producerConsumer_CPP_Sync_API() {
@@ -169,18 +169,18 @@ void producerConsumer_CPP_Sync_API() {
 
     for (int i = 0; i <= threadNum; i++) {
         waitForAll->wait();
-        printString("\nwaitForAll->wait()\n");
+        //printString("\nwaitForAll->wait()\n");
     }
 
     for (int i = 0; i < threadNum; i++) {
-        printString("before delete thread\n");
+        //printString("before delete thread\n");
         delete threads[i];
-        printString("after delete thread\n");
+        //printString("after delete thread\n");
     }
-    printString("after delete threads end\n");
+    //printString("after delete threads end\n");
     delete consumerThread;
     delete waitForAll;
     delete buffer;
-    printString("kraj CP_CPP_Sync_API\n");
+    //printString("kraj CP_CPP_Sync_API\n");
 }
 

@@ -31,6 +31,15 @@ int mem_free (void* addr){
 }
 
 
+void thread_join(TCB** handle){
+    __asm__ volatile ("mv t1, %0" : : "r"(handle));
+    __asm__ volatile ("mv a1, t1");
+    __asm__ volatile ("li a0, 0x16");
+    __asm__ volatile ("ecall");
+
+}
+
+
 
 /**
  *
