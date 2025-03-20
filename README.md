@@ -1,7 +1,7 @@
 # **Multithreaded Kernel for RISC-V Emulator**
 
 ## **Project Overview**
-This project is a simplified yet functional kernel for a multithreaded operating system, designed to run in a RISC-V emulation environment. It implements essential OS functionalities such as thread management, memory allocation, and synchronization using semaphores.
+This project is a simplified yet functional kernel for a multithreaded operating system, designed to run in a RISC-V emulation environment. It implements essential OS functionalities such as thread management, memory allocation, and synchronization using semaphores. It does not rely on any external libraries, which means that it refrains from utilizing system calls provided by the host operating system. More detailed project specification, operating modes, call hierarchy, and similar details can be seen in the PDF file ```Projektni zadatak 2024. v1.0.pdf```.
 
 ## **Features**
 - **Thread Management:** Supports lightweight threads with context switching and scheduling.
